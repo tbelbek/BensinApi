@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    image: tbelbek/bensinpriser:latest
+    volumes:
+      - .:/app
+      - ./.env:/app/.env
+    environment:
+      - FLASK_APP=app.py
+    command: flask run --host=0.0.0.0
