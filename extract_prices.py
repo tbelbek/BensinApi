@@ -1,29 +1,66 @@
+import os
 import sqlite3
+from datetime import datetime
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Alpha Vantage API key
-ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')
+OILPRICE_API_KEY = os.getenv('OILPRICE_API_KEY')
+
 
 def fetch_brent_prices():
-    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=BZ=F&apikey={ALPHA_VANTAGE_API_KEY}'
-    response = requests.get(url)
-    data = response.json()
-    time_series = data.get('Time Series (Daily)', {})
+    try:
+        # Fetch the exchange rate dynamically
+        exchange_rate_response = requests.get('https://api.exchangerate-api.com/v4/latest/USD')
+        exchange_rate_response.raise_for_status()
+        exchange_rates = exchange_rate_response.json()
+        usd_to_sek = exchange_rates['rates']['SEK']
+        
+        url = 'https://api.oilpriceapi.com/v1/prices/latest'
+        headers = {
+            'Authorization': f'Token {OILPRICE_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+        data = response.json()
+        
+        # Extract the relevant data from the response
+        price_data = data.get('data', {})
+        price_per_gallon = price_data.get('price')
+        created_at = price_data.get('created_at')
+        
+        # Convert the created_at field to a datetime object
+        date = pd.to_datetime(created_at)
+        
+        # Convert the price from per gallon to per litre
+        price_per_litre = price_per_gallon / (158.987)
+        
+        # Convert the price from USD to SEK
+        price_per_litre_sek = price_per_litre * usd_to_sek
+        
+        # Create a DataFrame with the extracted data
+        brent_prices = [{'date': date, 'price': price_per_litre_sek}]
+        df = pd.DataFrame(brent_prices)
+        
+        # Sort the DataFrame by date in descending order
+        df = df.sort_values(by='date', ascending=False)
+        
+        # Get the most recent date with data
+        if not df.empty:
+            return df.iloc[0:1]  # Return a DataFrame with the most recent row
+        else:
+            return pd.DataFrame()  # Return an empty DataFrame if no data is available
     
-    brent_prices = []
-    for date, prices in time_series.items():
-        brent_prices.append({
-            'date': pd.to_datetime(date),
-            'price': float(prices['4. close'])
-        })
-    
-    return pd.DataFrame(brent_prices)
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return pd.DataFrame() 
 
 # List of URLs to scrape
 urls = [
@@ -62,6 +99,9 @@ for url in urls:
     price_table = soup.find('table', {'id': 'price_table'})
     rows = price_table.find_all('tr')
 
+    # Get today's date in the format %d/%m
+    today_str = datetime.today().strftime('%d/%m')
+
     for row in rows[1:]:  # Skip the header row
         columns = row.find_all('td')
         if len(columns) > 1:
@@ -77,23 +117,31 @@ for url in urls:
                 price = price_tag.get_text(strip=True)
                 date = date_tag.get_text(strip=True)
                 
+                # Exclude the row if the date is not today
+                if date != today_str:
+                    continue
+                
+                # Extract the date and add the current year
+                date = date_tag.get_text(strip=True)
+                current_year = datetime.now().year
+                date_with_year = f"{date}/{current_year}"
+                
                 # Insert data into SQLite database
                 c.execute('''
                     INSERT INTO prices (brand, station, price, date)
                     VALUES (?, ?, ?, ?)
-                ''', (brand, station, price, date))
+                ''', (brand, station, price, date_with_year))
                 
-                # Add date to the set of fetched dates
-                dates_fetched.add(pd.to_datetime(date, format='%d/%m'))
+                # Add date to the set of fetched dates with the current year
+                dates_fetched.add(pd.to_datetime(date_with_year, format='%d/%m/%Y'))
 
 # Fetch Brent prices and insert into SQLite database for the fetched dates
 brent_data = fetch_brent_prices()
 for index, row in brent_data.iterrows():
-    if row['date'] in dates_fetched:
-        c.execute('''
-            INSERT INTO prices (brand, station, price, date)
-            VALUES (?, ?, ?, ?)
-        ''', ('Brent', 'world', f"{row['price']} kr", row['date'].strftime('%d/%m')))
+    c.execute('''
+        INSERT INTO prices (brand, station, price, date)
+        VALUES (?, ?, ?, ?)
+    ''', ('Brent', 'world', f"{row['price']} $", row['date'].strftime('%d/%m/%Y')))
 
 # Commit the transaction and close the connection
 conn.commit()

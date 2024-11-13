@@ -1,8 +1,10 @@
-from flask import Flask, render_template
 import sqlite3
+from datetime import datetime
+
+import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as pyo
-import pandas as pd
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
@@ -21,38 +23,119 @@ def index():
 
     # Process the data
     data = pd.DataFrame(rows, columns=['brand', 'station', 'price', 'date'])
-    data['price'] = data['price'].str.replace('kr', '').str.replace(',', '.').astype(float)
-    data['date'] = pd.to_datetime(data['date'], format='%d/%m')
+    data['price'] = data['price'].str.replace('kr', '').str.replace('$', '').str.replace(',', '.').astype(float)
+    data['date'] = pd.to_datetime(data['date'], format='%d/%m/%Y')
 
-    # Aggregate data by date to get the lowest and highest prices overall
-    daily_data = data.groupby('date').agg({'price': ['min', 'max']}).reset_index()
+    # Separate the Brent data from the other data
+    brent_data = data[data['brand'].str.lower() == 'brent']
+    other_data = data[data['brand'].str.lower() != 'brent']
+
+    # Aggregate data by date to get the lowest and highest prices overall for other brands
+    daily_data = other_data.groupby('date').agg({'price': ['min', 'max']}).reset_index()
     daily_data.columns = ['date', 'low', 'high']
 
-    # Create the candlestick chart
-    fig = go.Figure()
+    # Aggregate Brent data by date
+    brent_daily_data = brent_data.groupby('date').agg({'price': 'mean'}).reset_index()
+    brent_daily_data.columns = ['date', 'price']
 
-    fig.add_trace(go.Candlestick(
+    # Create the Bensin figure
+    bensin_fig = go.Figure()
+
+    # Add the low prices trace
+    bensin_fig.add_trace(go.Scatter(
         x=daily_data['date'],
-        open=daily_data['low'],
-        high=daily_data['high'],
-        low=daily_data['low'],
-        close=daily_data['high'],
-        name='Prices'
+        y=daily_data['low'],
+        mode='markers',
+        name='Lowest Prices',
+        text=other_data['brand'],  # Add brand information
+        hoverinfo='x+y+text'  # Show date, price, and brand in the tooltip
     ))
 
-    # Update layout
-    fig.update_layout(
-        title='Gas Prices in Göteborg',
+    # Add the high prices trace
+    bensin_fig.add_trace(go.Scatter(
+        x=daily_data['date'],
+        y=daily_data['high'],
+        mode='markers',
+        name='Highest Prices',
+        text=other_data['brand'],  # Add brand information
+        hoverinfo='x+y+text'  # Show date, price, and brand in the tooltip
+    ))
+
+    # Update layout for Bensin figure
+    bensin_fig.update_layout(
+        title='Bensin Prices in Göteborg',
         xaxis_title='Date',
         yaxis_title='Price (kr)',
-        template='plotly_dark'
+        xaxis=dict(type='category')  # Show only dates
     )
 
-    # Generate the HTML graph
-    graph_html = pyo.plot(fig, output_type='div', include_plotlyjs=False)
+    # Create the Brent figure
+    brent_fig = go.Figure()
 
-    return render_template('index.html', graph_html=graph_html)
+    # Add the Brent data trace
+    brent_fig.add_trace(go.Scatter(
+        x=brent_daily_data['date'],
+        y=brent_daily_data['price'],
+        mode='lines+markers',  # You can change this to 'lines' or 'markers' as needed
+        name='Brent Prices',
+        text=brent_data['brand'],  # Add brand information
+        hoverinfo='x+y+text'  # Show date, price, and brand in the tooltip
+    ))
 
+    # Update layout for Brent figure
+    brent_fig.update_layout(
+        title='Brent Prices in Göteborg',
+        xaxis_title='Date',
+        yaxis_title='Price (kr)',
+        xaxis=dict(type='category')  # Show only dates
+    )
+
+    # Generate the HTML graphs
+    bensin_graph_html = pyo.plot(bensin_fig, output_type='div', include_plotlyjs=False)
+    brent_graph_html = pyo.plot(brent_fig, output_type='div', include_plotlyjs=False)
+
+    # Exclude the brand 'Brent'
+    filtered_data = data[data['brand'].str.lower() != 'brent']
+
+    # Find the lowest price for each brand and the corresponding stations
+    lowest_prices = filtered_data.loc[filtered_data.groupby('brand')['price'].idxmin()].reset_index(drop=True)
+    lowest_prices = filtered_data.groupby(['brand', 'price']).agg({'station': ', '.join}).reset_index()
+
+    # Find the latest update date for each brand
+    latest_update_dates = filtered_data.groupby('brand')['date'].max().reset_index()
+    latest_update_dates['date'] = latest_update_dates['date'].dt.strftime('%d/%m/%Y')
+
+    # Merge the lowest prices with the latest update dates
+    lowest_prices = pd.merge(lowest_prices, latest_update_dates, on='brand')
+
+    # Sort the table by the lowest price first
+    lowest_prices = lowest_prices.sort_values(by=['date', 'price'])
+    # Calculate the lowest prices for different time periods for all brands combined
+    one_month_ago = datetime.now() - pd.DateOffset(months=1)
+    three_months_ago = datetime.now() - pd.DateOffset(months=3)
+    one_year_ago = datetime.now() - pd.DateOffset(years=1)
+
+    lowest_prices_1_month = filtered_data[filtered_data['date'] >= one_month_ago].nsmallest(1, 'price')
+    lowest_prices_1_month['period'] = '1 Month'
+
+    lowest_prices_3_months = filtered_data[filtered_data['date'] >= three_months_ago].nsmallest(1, 'price')
+    lowest_prices_3_months['period'] = '3 Months'
+
+    lowest_prices_1_year = filtered_data[filtered_data['date'] >= one_year_ago].nsmallest(1, 'price')
+    lowest_prices_1_year['period'] = '1 Year'
+
+    lowest_prices_all_time = filtered_data.nsmallest(1, 'price')
+    lowest_prices_all_time['period'] = 'All Time'
+
+    # Concatenate the DataFrames
+    lowest_prices_combined = pd.concat([lowest_prices_1_month, lowest_prices_3_months, lowest_prices_1_year, lowest_prices_all_time])
+
+    # Pass the new data to the template
+    return render_template('index.html', 
+                        bensin_graph_html=bensin_graph_html, 
+                        brent_graph_html=brent_graph_html, 
+                        lowest_prices=lowest_prices,
+                        lowest_prices_combined=lowest_prices_combined)
 
 if __name__ == '__main__':
     app.run(debug=True)

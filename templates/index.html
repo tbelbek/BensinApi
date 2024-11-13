@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gas Prices in Göteborg</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <h1>Gas Prices in Göteborg</h1>
+
+    <h1>Lowest Prices by Brand</h1>
+    <table border="1">
+        <tr>
+            <th>Brand</th>
+            <th>Lowest Price (kr)</th>
+            <th>Stations</th>
+            <th>Last Updated</th>
+        </tr>
+        {% for row in lowest_prices.itertuples() %}
+        <tr>
+            <td>{{ row.brand }}</td>
+            <td>{{ row.price }}</td>
+            <td>{{ row.station }}</td>
+            <td>{{ row.date }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h1>Lowest Prices</h1>
+    <table border="1">
+        <tr>
+            <th>Brand</th>
+            <th>Lowest Price (kr)</th>
+            <th>Station</th>
+            <th>Last Updated</th>
+            <th>Period</th>
+        </tr>
+        {% for row in lowest_prices_combined.itertuples() %}
+        <tr>
+            <td>{{ row.brand }}</td>
+            <td>{{ row.price }}</td>
+            <td>{{ row.station }}</td>
+            <td>{{ row.date }}</td>
+            <td>{{ row.period }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h1>Bensin Prices</h1>
+    {{ bensin_graph_html|safe }}
+    <h1>Brent Prices</h1>
+    {{ brent_graph_html|safe }}
+</body>
+
+</html>
