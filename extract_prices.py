@@ -65,10 +65,8 @@ def fetch_brent_prices():
 # List of URLs to scrape
 urls = [
     'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/2',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/3',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/4',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/5'
+    'https://bensinpriser.nu/stationer/98/vastra-gotalands-lan/goteborg/2',
+    'https://bensinpriser.nu/stationer/98/vastra-gotalands-lan/goteborg/3'
 ]
 
 # Connect to SQLite database (or create it if it doesn't exist)
@@ -107,14 +105,18 @@ for url in urls:
         if len(columns) > 1:
             # Extract brand and station details
             brand_tag = columns[0].find('b')
-            br_tag = columns[0].find('br')
+            station_details = columns[0].find(text=True, recursive=False).strip()
             price_tag = columns[1].find('b')
-            date_tag = columns[1].find('small')
+            date_tag = columns[1].find('small') 
 
-            if brand_tag and br_tag and price_tag and date_tag:
+            if brand_tag and price_tag and date_tag:
                 brand = brand_tag.get_text(strip=True)
-                station = br_tag.next_sibling.strip()
+                station = station_details.strip()
+                
+                # Extract and clean the price
                 price = price_tag.get_text(strip=True)
+                price = price.replace('kr', '').replace(',', '.').strip()
+                
                 date = date_tag.get_text(strip=True)
                 
                 # Exclude the row if the date is not today
@@ -124,7 +126,10 @@ for url in urls:
                 # Extract the date and add the current year
                 date = date_tag.get_text(strip=True)
                 current_year = datetime.now().year
-                date_with_year = f"{date}/{current_year}"
+                date_with_year = f"{date}/{current_year}"                
+                    
+                # Log the row before insertion
+                print(f"Inserting row: Brand={brand}, Station={station}, Price={price}, Date={date_with_year}")    
                 
                 # Insert data into SQLite database
                 c.execute('''
