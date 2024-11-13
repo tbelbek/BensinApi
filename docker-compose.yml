@@ -11,6 +11,19 @@ services:
     command: flask run --host=0.0.0.0
     networks:
       - proxy
+  backup:
+    # In production, it is advised to lock your image tag to a proper
+    # release version instead of using `latest`.
+    # Check https://github.com/offen/docker-volume-backup/releases
+    # for a list of available releases.
+    image: offen/docker-volume-backup:latest
+    restart: always
+    env_file: ./backup.env # see below for configuration reference
+    volumes:
+      - ./.env:/backup/bensinpriser-env-backup:ro
+      - ./prices.db:/backup/bensinpriser-data-backup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /C/Users/tugha/OneDrive/Backup/Bensinpriser:/archive
 networks:
   proxy:
     external: true
