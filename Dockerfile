@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
+# Copy the templates folder
+COPY templates/ templates/
+
 # Install cron
 RUN apt-get update && apt-get install -y cron
 
@@ -30,3 +33,7 @@ RUN touch /var/log/cron.log
 
 # Run the command on container startup
 CMD cron && tail -f /var/log/cron.log
+
+# docker build -t bensinpriser .
+# docker tag bensinpriser tbelbek/bensinpriser:latest
+# docker push tbelbek/bensinpriser:latest

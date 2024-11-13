@@ -4,8 +4,14 @@ services:
   web:
     image: tbelbek/bensinpriser:latest
     volumes:
-      - .:/app
       - ./.env:/app/.env
+      - ./prices.db:/app/prices.db
     environment:
       - FLASK_APP=app.py
     command: flask run --host=0.0.0.0
+    networks:
+      - proxy
+networks:
+  proxy:
+    external: true
+    name: proxy_network

@@ -65,9 +65,15 @@ def fetch_brent_prices():
 # List of URLs to scrape
 urls = [
     'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg',
-    'https://bensinpriser.nu/stationer/98/vastra-gotalands-lan/goteborg/2',
-    'https://bensinpriser.nu/stationer/98/vastra-gotalands-lan/goteborg/3'
+    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/2',
+    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/3'
 ]
+
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the full path to the database file
+db_path = os.path.join(script_dir, 'prices.db')
 
 # Connect to SQLite database (or create it if it doesn't exist)
 conn = sqlite3.connect('prices.db')
