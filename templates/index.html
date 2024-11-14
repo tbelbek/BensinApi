@@ -3,53 +3,78 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gas Prices in Göteborg</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .highlight {
+            background-color: #d4edda; /* Light green background */
+            color: #155724; /* Dark green text */
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Gas Prices in Göteborg</h1>
+    <div class="container">
+        <h1 class="my-4">Gas Prices in Göteborg</h1>
 
-    <h1>Lowest Prices by Brand</h1>
-    <table border="1">
-        <tr>
-            <th>Brand</th>
-            <th>Lowest Price (kr)</th>
-            <th>Stations</th>
-            <th>Last Updated</th>
-        </tr>
-        {% for row in lowest_prices.itertuples() %}
-        <tr>
-            <td>{{ row.brand }}</td>
-            <td>{{ row.price }}</td>
-            <td>{{ row.station }}</td>
-            <td>{{ row.date }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <h1>Lowest Prices</h1>
-    <table border="1">
-        <tr>
-            <th>Brand</th>
-            <th>Lowest Price (kr)</th>
-            <th>Station</th>
-            <th>Last Updated</th>
-            <th>Period</th>
-        </tr>
-        {% for row in lowest_prices_combined.itertuples() %}
-        <tr>
-            <td>{{ row.brand }}</td>
-            <td>{{ row.price }}</td>
-            <td>{{ row.station }}</td>
-            <td>{{ row.date }}</td>
-            <td>{{ row.period }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <h1>Bensin Prices</h1>
-    {{ bensin_graph_html|safe }}
-    <h1>Brent Prices</h1>
-    {{ brent_graph_html|safe }}
+        <h2 class="my-4">Lowest Prices by Brand</h2>
+        <table class="table table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Brand</th>
+                    <th>Lowest Price (kr)</th>
+                    <th>Stations</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in lowest_prices.itertuples() %}
+                <tr class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}">
+                    <td>{{ row.brand }}</td>
+                    <td>{{ row.price }}</td>
+                    <td>{{ row.station }}</td>
+                    <td>{{ row.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="my-4">Lowest Prices</h2>
+        <table class="table table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Brand</th>
+                    <th>Lowest Price (kr)</th>
+                    <th>Station</th>
+                    <th>Last Updated</th>
+                    <th>Period</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in lowest_prices_combined.itertuples() %}
+                <tr>
+                    <td>{{ row.brand }}</td>
+                    <td>{{ row.price }}</td>
+                    <td>{{ row.station }}</td>
+                    <td>{{ row.date }}</td>
+                    <td>{{ row.period }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="my-4">Bensin Prices</h2>
+        <div>{{ bensin_graph_html|safe }}</div>
+
+        <h2 class="my-4">Brent Prices</h2>
+        <div>{{ brent_graph_html|safe }}</div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 
 </html>
