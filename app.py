@@ -1,14 +1,15 @@
+import atexit
 import logging
 import sqlite3
 from datetime import datetime
+
+import extract_prices as ep
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as pyo
-from flask import Flask, render_template
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-import atexit
-import extract_prices as ep
+from flask import Flask, render_template
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
