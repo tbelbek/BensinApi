@@ -1,7 +1,6 @@
 import os
 import sqlite3
 from datetime import datetime
-
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -13,6 +12,18 @@ load_dotenv()
 # Alpha Vantage API key
 OILPRICE_API_KEY = os.getenv('OILPRICE_API_KEY')
 
+# List of URLs to scrape
+URLS = [
+    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg',
+    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/2',
+    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/3'
+]
+
+# Get the directory of the current script
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the full path to the database file
+DB_PATH = os.path.join(SCRIPT_DIR, 'prices.db')
 
 def fetch_brent_prices():
     try:
@@ -60,100 +71,104 @@ def fetch_brent_prices():
     
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
-        return pd.DataFrame() 
+        return pd.DataFrame()
 
-# List of URLs to scrape
-urls = [
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/2',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/3'
-]
+def create_database():
+    # Connect to SQLite database (or create it if it doesn't exist)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
 
-# Get the directory of the current script
-script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Create table for gas prices
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS prices (
+            id INTEGER PRIMARY KEY,
+            brand TEXT,
+            station TEXT,
+            price TEXT,
+            date TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-# Construct the full path to the database file
-db_path = os.path.join(script_dir, 'prices.db')
-
-# Connect to SQLite database (or create it if it doesn't exist)
-conn = sqlite3.connect('prices.db')
-c = conn.cursor()
-
-# Create table for gas prices
-c.execute('''
-    CREATE TABLE IF NOT EXISTS prices (
-        id INTEGER PRIMARY KEY,
-        brand TEXT,
-        station TEXT,
-        price TEXT,
-        date TEXT
-    )
-''')
-
-# Fetch gas prices and insert into SQLite database
-dates_fetched = set()
-for url in urls:
-    # Send a GET request to the URL
-    response = requests.get(url)
-
-    # Parse the HTML content using BeautifulSoup
-    soup = BeautifulSoup(response.content, 'html.parser')
-
-    # Extract the data
-    price_table = soup.find('table', {'id': 'price_table'})
-    rows = price_table.find_all('tr')
+def insert_gas_prices():
+    # Connect to SQLite database
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
 
     # Get today's date in the format %d/%m
     today_str = datetime.today().strftime('%d/%m')
 
-    for row in rows[1:]:  # Skip the header row
-        columns = row.find_all('td')
-        if len(columns) > 1:
-            # Extract brand and station details
-            brand_tag = columns[0].find('b')
-            station_details = columns[0].find(text=True, recursive=False).strip()
-            price_tag = columns[1].find('b')
-            date_tag = columns[1].find('small') 
+    for url in URLS:
+        # Send a GET request to the URL
+        response = requests.get(url)
 
-            if brand_tag and price_tag and date_tag:
-                brand = brand_tag.get_text(strip=True)
-                station = station_details.strip()
-                
-                # Extract and clean the price
-                price = price_tag.get_text(strip=True)
-                price = price.replace('kr', '').replace(',', '.').strip()
-                
-                date = date_tag.get_text(strip=True)
-                
-                # Exclude the row if the date is not today
-                if date != today_str:
-                    continue
-                
-                # Extract the date and add the current year
-                date = date_tag.get_text(strip=True)
-                current_year = datetime.now().year
-                date_with_year = f"{date}/{current_year}"                
+        # Parse the HTML content using BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Extract the data
+        price_table = soup.find('table', {'id': 'price_table'})
+        rows = price_table.find_all('tr')
+
+        for row in rows[1:]:  # Skip the header row
+            columns = row.find_all('td')
+            if len(columns) > 1:
+                # Extract brand and station details
+                brand_tag = columns[0].find('b')
+                station_details = columns[0].find(text=True, recursive=False).strip()
+                price_tag = columns[1].find('b')
+                date_tag = columns[1].find('small') 
+
+                if brand_tag and price_tag and date_tag:
+                    brand = brand_tag.get_text(strip=True)
+                    station = station_details.strip()
                     
-                # Log the row before insertion
-                print(f"Inserting row: Brand={brand}, Station={station}, Price={price}, Date={date_with_year}")    
-                
-                # Insert data into SQLite database
-                c.execute('''
-                    INSERT INTO prices (brand, station, price, date)
-                    VALUES (?, ?, ?, ?)
-                ''', (brand, station, price, date_with_year))
-                
-                # Add date to the set of fetched dates with the current year
-                dates_fetched.add(pd.to_datetime(date_with_year, format='%d/%m/%Y'))
+                    # Extract and clean the price
+                    price = price_tag.get_text(strip=True)
+                    price = price.replace('kr', '').replace(',', '.').strip()
+                    
+                    date = date_tag.get_text(strip=True)
+                    
+                    # Exclude the row if the date is not today
+                    if date != today_str:
+                        continue
+                    
+                    # Extract the date and add the current year
+                    date_with_year = f"{date}/{datetime.now().year}"                
+                        
+                    # Log the row before insertion
+                    print(f"Inserting row: Brand={brand}, Station={station}, Price={price}, Date={date_with_year}")    
+                    
+                    # Insert data into SQLite database
+                    c.execute('''
+                        INSERT INTO prices (brand, station, price, date)
+                        VALUES (?, ?, ?, ?)
+                    ''', (brand, station, price, date_with_year))
 
-# Fetch Brent prices and insert into SQLite database for the fetched dates
-brent_data = fetch_brent_prices()
-for index, row in brent_data.iterrows():
-    c.execute('''
-        INSERT INTO prices (brand, station, price, date)
-        VALUES (?, ?, ?, ?)
-    ''', ('Brent', 'world', f"{row['price']} $", row['date'].strftime('%d/%m/%Y')))
+    conn.commit()
+    conn.close()
 
-# Commit the transaction and close the connection
-conn.commit()
-conn.close()
+def insert_brent_prices():
+    # Connect to SQLite database
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    # Fetch Brent prices and insert into SQLite database
+    brent_data = fetch_brent_prices()
+    for index, row in brent_data.iterrows():
+        c.execute('''
+            INSERT INTO prices (brand, station, price, date)
+            VALUES (?, ?, ?, ?)
+        ''', ('Brent', 'world', f"{row['price']} $", row['date'].strftime('%d/%m/%Y')))
+
+    conn.commit()
+    conn.close()
+
+def main():
+    print()
+    create_database()
+    insert_gas_prices()
+    insert_brent_prices()
+
+if __name__ == "__main__":
+    main()

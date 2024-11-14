@@ -1,12 +1,24 @@
+import logging
 import sqlite3
 from datetime import datetime
-
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as pyo
 from flask import Flask, render_template
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+import atexit
+import extract_prices as ep
 
 app = Flask(__name__)
+
+# Initialize the scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=16, minute=0))
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 @app.route('/')
 def index():

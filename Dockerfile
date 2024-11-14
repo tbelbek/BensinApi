@@ -13,27 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
-# Copy the templates folder
-COPY templates/ templates/
+# Expose the port the app runs on
+EXPOSE 5000
 
-# Install cron
-RUN apt-get update && apt-get install -y cron
-
-# Add the crontab file in the cron directory
-COPY crontab /etc/cron.d/extract_prices_cron
-
-# Give execution rights on the cron job
-RUN chmod 0644 /etc/cron.d/extract_prices_cron
-
-# Apply cron job
-RUN crontab /etc/cron.d/extract_prices_cron
-
-# Create the log file to be able to run tail
-RUN touch /var/log/cron.log
-
-# Run the command on container startup
-CMD cron && tail -f /var/log/cron.log
-
-# docker build -t bensinpriser .
-# docker tag bensinpriser tbelbek/bensinpriser:latest
-# docker push tbelbek/bensinpriser:latest
+# Run the Flask application
+CMD ["flask", "run", "--host=0.0.0.0"]

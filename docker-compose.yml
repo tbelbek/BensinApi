@@ -8,18 +8,13 @@ services:
       - ./prices.db:/app/prices.db
     environment:
       - FLASK_APP=app.py
-    command: >
-      sh -c "cron && flask run --host=0.0.0.0"
+    command: flask run --host=0.0.0.0
     networks:
       - proxy
   backup:
-    # In production, it is advised to lock your image tag to a proper
-    # release version instead of using `latest`.
-    # Check https://github.com/offen/docker-volume-backup/releases
-    # for a list of available releases.
     image: offen/docker-volume-backup:latest
     restart: always
-    env_file: ./backup.env # see below for configuration reference
+    env_file: ./backup.env
     volumes:
       - ./.env:/backup/bensinpriser-env-backup:ro
       - ./prices.db:/backup/bensinpriser-data-backup:ro
