@@ -8,7 +8,8 @@ services:
       - ./prices.db:/app/prices.db
     environment:
       - FLASK_APP=app.py
-    command: flask run --host=0.0.0.0
+    command: >
+      sh -c "cron && flask run --host=0.0.0.0"
     networks:
       - proxy
   backup:
