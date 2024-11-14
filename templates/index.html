@@ -17,59 +17,79 @@
 
 <body>
     <div class="container">
-        <h1 class="my-4">Gas Prices in Göteborg</h1>
+        <h1 class="my-4 text-center">Gas Prices in Göteborg</h1>
 
-        <h2 class="my-4">Lowest Prices by Brand</h2>
-        <table class="table table-bordered">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Brand</th>
-                    <th>Lowest Price (kr)</th>
-                    <th>Stations</th>
-                    <th>Last Updated</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in lowest_prices.itertuples() %}
-                <tr class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}">
-                    <td>{{ row.brand }}</td>
-                    <td>{{ row.price }}</td>
-                    <td>{{ row.station }}</td>
-                    <td>{{ row.date }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="row">
+            <div class="col-12">
+                <h2 class="my-4">Lowest Prices by Brand</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Brand</th>
+                                <th>Lowest Price (kr)</th>
+                                <th>Stations</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in lowest_prices.itertuples() %}
+                            <tr class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}">
+                                <td>{{ row.brand }}</td>
+                                <td>{{ row.price }}</td>
+                                <td>{{ row.station }}</td>
+                                <td>{{ row.date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-        <h2 class="my-4">Lowest Prices</h2>
-        <table class="table table-bordered">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Brand</th>
-                    <th>Lowest Price (kr)</th>
-                    <th>Station</th>
-                    <th>Last Updated</th>
-                    <th>Period</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in lowest_prices_combined.itertuples() %}
-                <tr>
-                    <td>{{ row.brand }}</td>
-                    <td>{{ row.price }}</td>
-                    <td>{{ row.station }}</td>
-                    <td>{{ row.date }}</td>
-                    <td>{{ row.period }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="row">
+            <div class="col-12">
+                <h2 class="my-4">Lowest Prices</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Brand</th>
+                                <th>Lowest Price (kr)</th>
+                                <th>Station</th>
+                                <th>Last Updated</th>
+                                <th>Period</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in lowest_prices_combined.itertuples() %}
+                            <tr>
+                                <td>{{ row.brand }}</td>
+                                <td>{{ row.price }}</td>
+                                <td>{{ row.station }}</td>
+                                <td>{{ row.date }}</td>
+                                <td>{{ row.period }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-        <h2 class="my-4">Bensin Prices</h2>
-        <div>{{ bensin_graph_html|safe }}</div>
+        <div class="row">
+            <div class="col-12">
+                <h2 class="my-4">Bensin Prices</h2>
+                <div>{{ bensin_graph_html|safe }}</div>
+            </div>
+        </div>
 
-        <h2 class="my-4">Brent Prices</h2>
-        <div>{{ brent_graph_html|safe }}</div>
+        <div class="row">
+            <div class="col-12">
+                <h2 class="my-4">Brent Prices</h2>
+                <div>{{ brent_graph_html|safe }}</div>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

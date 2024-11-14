@@ -20,12 +20,14 @@ app = Flask(__name__)
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=16, minute=0))
 scheduler.start()
-logger.info("Scheduler started...")
+
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
 @app.route('/')
 def index():
+    logger.info("Fetching data from the database")
+    
     # Connect to SQLite database
     conn = sqlite3.connect('prices.db')
     c = conn.cursor()
@@ -57,25 +59,15 @@ def index():
     # Create the Bensin figure
     bensin_fig = go.Figure()
 
-    # Add the low prices trace
-    bensin_fig.add_trace(go.Scatter(
+    # Create the candlestick chart
+    bensin_fig = go.Figure(data=[go.Candlestick(
         x=daily_data['date'],
-        y=daily_data['low'],
-        mode='markers',
-        name='Lowest Prices',
-        text=other_data['brand'],  # Add brand information
-        hoverinfo='x+y+text'  # Show date, price, and brand in the tooltip
-    ))
-
-    # Add the high prices trace
-    bensin_fig.add_trace(go.Scatter(
-        x=daily_data['date'],
-        y=daily_data['high'],
-        mode='markers',
-        name='Highest Prices',
-        text=other_data['brand'],  # Add brand information
-        hoverinfo='x+y+text'  # Show date, price, and brand in the tooltip
-    ))
+        open=daily_data['low'],  # Replace with actual open prices
+        high=daily_data['high'],
+        low=daily_data['low'],
+        close=daily_data['high'],  # Replace with actual close prices
+        name='Bensin Prices'
+    )])
 
     # Update layout for Bensin figure
     bensin_fig.update_layout(
@@ -146,6 +138,8 @@ def index():
     # Concatenate the DataFrames
     lowest_prices_combined = pd.concat([lowest_prices_1_month, lowest_prices_3_months, lowest_prices_1_year, lowest_prices_all_time])
 
+    logger.info("Rendering template with updated data")
+    
     # Pass the new data to the template
     return render_template('index.html', 
                         bensin_graph_html=bensin_graph_html, 
@@ -154,4 +148,5 @@ def index():
                         lowest_prices_combined=lowest_prices_combined)
 
 if __name__ == '__main__':
+    logger.info("Starting Flask application")
     app.run(debug=True)
