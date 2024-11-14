@@ -1,2 +1,0 @@
-# Run the extract_prices.py script at 14:00 every day
-00 16 * * * /usr/local/bin/python /app/extract_prices.py >> /var/log/cron.log 2>&1
