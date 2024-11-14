@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -165,7 +166,7 @@ def insert_brent_prices():
     conn.close()
 
 def main():
-    print()
+    print("Fetching and inserting gas prices...")
     create_database()
     insert_gas_prices()
     insert_brent_prices()

@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from datetime import datetime
 import pandas as pd
@@ -9,13 +10,17 @@ from apscheduler.triggers.cron import CronTrigger
 import atexit
 import extract_prices as ep
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 
 # Initialize the scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=16, minute=0))
 scheduler.start()
-print
+logger.info("Scheduler started...")
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
