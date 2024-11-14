@@ -1,4 +1,3 @@
-import logging
 import sqlite3
 from datetime import datetime
 import pandas as pd
@@ -16,7 +15,7 @@ app = Flask(__name__)
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=16, minute=0))
 scheduler.start()
-
+print
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
