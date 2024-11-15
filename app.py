@@ -19,7 +19,10 @@ app = Flask(__name__)
 
 # Initialize the scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=16, minute=0))
+scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=12, minute=0))
+scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=15, minute=0))
+scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=6, minute=0))
+scheduler.add_job(func=ep.main, trigger=CronTrigger(hour=9, minute=0))
 scheduler.start()
 
 # Shut down the scheduler when exiting the app
