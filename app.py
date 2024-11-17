@@ -33,27 +33,32 @@ def index():
     logger.info("Fetching data from the database")
     
     # Connect to SQLite database
-    conn = sqlite3.connect('prices.db')
+    conn = sqlite3.connect(ep.DB_PATH)
     c = conn.cursor()
 
-    # Fetch data from the database
-    c.execute('SELECT brand, station, price, date FROM prices')
-    rows = c.fetchall()
+    # Fetch gas prices data from the database
+    c.execute('SELECT brand, station, price, date FROM gas_prices')
+    gas_rows = c.fetchall()
+
+    # Fetch Brent prices data from the database
+    c.execute('SELECT price, date FROM brent_prices')
+    brent_rows = c.fetchall()
 
     # Close the connection
     conn.close()
 
-    # Process the data
-    data = pd.DataFrame(rows, columns=['brand', 'station', 'price', 'date'])
-    data['price'] = data['price'].str.replace('kr', '').str.replace('$', '').str.replace(',', '.').astype(float)
-    data['date'] = pd.to_datetime(data['date'], format='%d/%m/%Y')
+    # Process the gas prices data
+    gas_data = pd.DataFrame(gas_rows, columns=['brand', 'station', 'price', 'date'])
+    gas_data['price'] = gas_data['price'].astype(float)
+    gas_data['date'] = pd.to_datetime(gas_data['date'], format='%d/%m/%Y')
 
-    # Separate the Brent data from the other data
-    brent_data = data[data['brand'].str.lower() == 'brent']
-    other_data = data[data['brand'].str.lower() != 'brent']
+    # Process the Brent prices data
+    brent_data = pd.DataFrame(brent_rows, columns=['price', 'date'])
+    brent_data['price'] = brent_data['price'].str.replace(' $', '').astype(float)
+    brent_data['date'] = pd.to_datetime(brent_data['date'], format='%d/%m/%Y')
 
     # Aggregate data by date to get the lowest and highest prices overall for other brands
-    daily_data = other_data.groupby('date').agg({'price': ['min', 'max']}).reset_index()
+    daily_data = gas_data.groupby('date').agg({'price': ['min', 'max']}).reset_index()
     daily_data.columns = ['date', 'low', 'high']
 
     # Aggregate Brent data by date
@@ -61,9 +66,6 @@ def index():
     brent_daily_data.columns = ['date', 'price']
 
     # Create the Bensin figure
-    bensin_fig = go.Figure()
-
-    # Create the candlestick chart
     bensin_fig = go.Figure(data=[go.Candlestick(
         x=daily_data['date'],
         open=daily_data['low'],  # Replace with actual open prices
@@ -90,7 +92,7 @@ def index():
         y=brent_daily_data['price'],
         mode='lines+markers',  # You can change this to 'lines' or 'markers' as needed
         name='Brent Prices',
-        text=brent_data['brand'],  # Add brand information
+        text=brent_data['price'],  # Add price information
         hoverinfo='x+y+text'  # Show date, price, and brand in the tooltip
     ))
 
@@ -106,15 +108,12 @@ def index():
     bensin_graph_html = pyo.plot(bensin_fig, output_type='div', include_plotlyjs=False)
     brent_graph_html = pyo.plot(brent_fig, output_type='div', include_plotlyjs=False)
 
-    # Exclude the brand 'Brent'
-    filtered_data = data[data['brand'].str.lower() != 'brent']
-
     # Find the lowest price for each brand and the corresponding stations
-    lowest_prices = filtered_data.loc[filtered_data.groupby('brand')['price'].idxmin()].reset_index(drop=True)
-    lowest_prices = filtered_data.groupby(['brand', 'price']).agg({'station': ', '.join}).reset_index()
+    lowest_prices = gas_data.loc[gas_data.groupby('brand')['price'].idxmin()].reset_index(drop=True)
+    lowest_prices = gas_data.groupby(['brand', 'price']).agg({'station': ', '.join}).reset_index()
 
     # Find the latest update date for each brand
-    latest_update_dates = filtered_data.groupby('brand')['date'].max().reset_index()
+    latest_update_dates = gas_data.groupby('brand')['date'].max().reset_index()
     latest_update_dates['date'] = latest_update_dates['date'].dt.strftime('%d/%m/%Y')
 
     # Merge the lowest prices with the latest update dates
@@ -122,21 +121,22 @@ def index():
 
     # Sort the table by the lowest price first
     lowest_prices = lowest_prices.sort_values(by=['date', 'price'])
+
     # Calculate the lowest prices for different time periods for all brands combined
     one_month_ago = datetime.now() - pd.DateOffset(months=1)
     three_months_ago = datetime.now() - pd.DateOffset(months=3)
     one_year_ago = datetime.now() - pd.DateOffset(years=1)
 
-    lowest_prices_1_month = filtered_data[filtered_data['date'] >= one_month_ago].nsmallest(1, 'price')
+    lowest_prices_1_month = gas_data[gas_data['date'] >= one_month_ago].nsmallest(1, 'price')
     lowest_prices_1_month['period'] = '1 Month'
 
-    lowest_prices_3_months = filtered_data[filtered_data['date'] >= three_months_ago].nsmallest(1, 'price')
+    lowest_prices_3_months = gas_data[gas_data['date'] >= three_months_ago].nsmallest(1, 'price')
     lowest_prices_3_months['period'] = '3 Months'
 
-    lowest_prices_1_year = filtered_data[filtered_data['date'] >= one_year_ago].nsmallest(1, 'price')
+    lowest_prices_1_year = gas_data[gas_data['date'] >= one_year_ago].nsmallest(1, 'price')
     lowest_prices_1_year['period'] = '1 Year'
 
-    lowest_prices_all_time = filtered_data.nsmallest(1, 'price')
+    lowest_prices_all_time = gas_data.nsmallest(1, 'price')
     lowest_prices_all_time['period'] = 'All Time'
 
     # Concatenate the DataFrames

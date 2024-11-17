@@ -81,12 +81,23 @@ def create_database():
 
     # Create table for gas prices
     c.execute('''
-        CREATE TABLE IF NOT EXISTS prices (
+        CREATE TABLE IF NOT EXISTS gas_prices (
             id INTEGER PRIMARY KEY,
             brand TEXT,
             station TEXT,
             price TEXT,
-            date TEXT
+            date TEXT,
+            created_at TEXT DEFAULT (datetime('now', 'localtime'))
+        )
+    ''')
+
+    # Create table for Brent prices
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS brent_prices (
+            id INTEGER PRIMARY KEY,
+            price TEXT,
+            date TEXT,
+            created_at TEXT DEFAULT (datetime('now', 'localtime'))
         )
     ''')
     conn.commit()
@@ -142,7 +153,7 @@ def insert_gas_prices():
                     
                     # Insert data into SQLite database
                     c.execute('''
-                        INSERT INTO prices (brand, station, price, date)
+                        INSERT INTO gas_prices (brand, station, price, date)
                         VALUES (?, ?, ?, ?)
                     ''', (brand, station, price, date_with_year))
 
@@ -158,9 +169,9 @@ def insert_brent_prices():
     brent_data = fetch_brent_prices()
     for index, row in brent_data.iterrows():
         c.execute('''
-            INSERT INTO prices (brand, station, price, date)
-            VALUES (?, ?, ?, ?)
-        ''', ('Brent', 'world', f"{row['price']} $", row['date'].strftime('%d/%m/%Y')))
+            INSERT INTO brent_prices (price, date)
+            VALUES (?, ?)
+        ''', (f"{row['price']} $", row['date'].strftime('%d/%m/%Y')))
 
     conn.commit()
     conn.close()
