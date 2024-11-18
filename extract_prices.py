@@ -28,6 +28,7 @@ DB_PATH = os.path.join(SCRIPT_DIR, 'prices.db')
 
 def fetch_brent_prices():
     try:
+        print("Fetching and inserting brent prices...")
         # Fetch the exchange rate dynamically
         exchange_rate_response = requests.get('https://api.exchangerate-api.com/v4/latest/USD')
         exchange_rate_response.raise_for_status()
@@ -107,6 +108,8 @@ def insert_gas_prices():
     # Connect to SQLite database
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+
+    print("Fetching and inserting gas prices...")
 
     # Get today's date in the format %d/%m
     today_str = datetime.today().strftime('%d/%m')
