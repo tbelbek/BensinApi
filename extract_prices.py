@@ -143,7 +143,15 @@ def insert_gas_prices():
                     
                     # Exclude the row if the date is not today
                     if date != today_str:
-                        continue
+                        # Check the last price for the station
+                        c.execute('''
+                            SELECT price FROM gas_prices
+                            WHERE station = ? AND brand = ?
+                            ORDER BY date DESC LIMIT 1
+                        ''', (station, brand))
+                        last_price_row = c.fetchone()
+                        if last_price_row and last_price_row[0] == price:
+                            continue
                     
                     # Extract the date and add the current year
                     date_with_year = f"{date}/{datetime.now().year}"                

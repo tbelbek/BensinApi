@@ -83,9 +83,17 @@ def create_brent_figure(brent_daily_data):
     return brent_fig
 
 def get_lowest_prices(gas_data):
-    lowest_prices = gas_data.loc[gas_data.groupby('brand')['price'].idxmin()].reset_index(drop=True)
-    lowest_prices = gas_data.groupby(['brand', 'price']).agg({'station': ', '.join}).reset_index()
-    latest_update_dates = gas_data.groupby('brand')['created_at'].max().reset_index()
+    # Get today's and yesterday's dates
+    today = datetime.now().date()
+    yesterday = today - pd.Timedelta(days=1)
+
+    # Filter the data for only today's and yesterday's prices
+    filtered_data = gas_data[gas_data['created_at'].dt.date.isin([today, yesterday])]
+
+    # Find the lowest prices
+    lowest_prices = filtered_data.loc[filtered_data.groupby('brand')['price'].idxmin()].reset_index(drop=True)
+    lowest_prices = filtered_data.groupby(['brand', 'price']).agg({'station': ', '.join}).reset_index()
+    latest_update_dates = filtered_data.groupby('brand')['created_at'].max().reset_index()
     latest_update_dates['created_at'] = latest_update_dates['created_at'].dt.strftime('%Y-%m-%d %H:%M:%S')
     lowest_prices = pd.merge(lowest_prices, latest_update_dates, on='brand')
     return lowest_prices.sort_values(by=['created_at', 'price'])
