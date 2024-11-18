@@ -13,12 +13,14 @@ load_dotenv()
 # Alpha Vantage API key
 OILPRICE_API_KEY = os.getenv('OILPRICE_API_KEY')
 
-# List of URLs to scrape
-URLS = [
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/2',
-    'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg/3'
-]
+# Base URL for scraping
+BASE_URL = 'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg'
+
+# Number of pages to scrape
+NUM_PAGES = 3
+
+# Generate the list of URLs dynamically
+URLS = [f"{BASE_URL}/{i}" if i > 1 else BASE_URL for i in range(1, NUM_PAGES + 1)]
 
 # Get the directory of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
