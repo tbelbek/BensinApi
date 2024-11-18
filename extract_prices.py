@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
@@ -110,10 +110,40 @@ def insert_gas_prices():
 
     # Get today's date in the format %d/%m
     today_str = datetime.today().strftime('%d/%m')
+    
+    yesterday = datetime.today() - timedelta(days=1)
+    yesterday_str = yesterday.strftime('%d/%m')
+
+    all_data = []
+
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "max-age=0",
+        "cookie": "PHPSESSID=i3orohsenila77n33913amke84",
+        "dnt": "1",
+        "priority": "u=0, i",
+        "referer": "https://bensinpriser.nu/stationer/98/vastra-gotalands-lan/goteborg",
+        "sec-ch-ua": "\"Brave\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+        "sec-ch-ua-arch": "\"x86\"",
+        "sec-ch-ua-bitness": "\"64\"",
+        "sec-ch-ua-full-version-list": "\"Brave\";v=\"131.0.0.0\", \"Chromium\";v=\"131.0.0.0\", \"Not_A Brand\";v=\"24.0.0.0\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-model": "\"\"",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-ch-ua-platform-version": "\"10.0.0\"",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-user": "?1",
+        "sec-gpc": "1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    }
 
     for url in URLS:
         # Send a GET request to the URL
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
 
         # Parse the HTML content using BeautifulSoup
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -142,32 +172,36 @@ def insert_gas_prices():
                     date = date_tag.get_text(strip=True)
                     
                     # Exclude the row if the date is not today
-                    if date != today_str:
-                        # Check the last price for the station
-                        c.execute('''
-                            SELECT price FROM gas_prices
-                            WHERE station = ? AND brand = ?
-                            ORDER BY date DESC LIMIT 1
-                        ''', (station, brand))
-                        last_price_row = c.fetchone()
-                        if last_price_row and last_price_row[0] == price:
-                            continue
+                    if date not in (today_str, yesterday_str):
+                        continue
                     
                     # Extract the date and add the current year
                     date_with_year = f"{date}/{datetime.now().year}"                
                         
-                    # Log the row before insertion
-                    print(f"Inserting row: Brand={brand}, Station={station}, Price={price}, Date={date_with_year}")    
-                    
-                    # Insert data into SQLite database
-                    c.execute('''
-                        INSERT INTO gas_prices (brand, station, price, date)
-                        VALUES (?, ?, ?, ?)
-                    ''', (brand, station, price, date_with_year))
+                    # Append the data to the list
+                    all_data.append((brand, station, price, date_with_year))
+
+    # Create a dictionary to store the latest data for each station
+    latest_data = {}
+    for data in all_data:
+        brand, station, price, date_with_year = data
+        if station not in latest_data or latest_data[station][3] < date_with_year:
+            latest_data[station] = data
+
+    # Insert the latest data for each station into the database
+    for data in latest_data.values():
+        brand, station, price, date_with_year = data
+        
+        # Insert a new record
+        c.execute('''
+            INSERT INTO gas_prices (brand, station, price, date)
+            VALUES (?, ?, ?, ?)
+        ''', (brand, station, price, date_with_year))
+        print(f"Inserted row: Brand={brand}, Station={station}, Price={price}, Date={date_with_year}")
 
     conn.commit()
     conn.close()
-
+    
 def insert_brent_prices():
     # Connect to SQLite database
     conn = sqlite3.connect(DB_PATH)

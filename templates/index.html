@@ -7,10 +7,13 @@
     <title>Gas Prices in Göteborg</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .highlight {
-            background-color: #d4edda; /* Light green background */
-            color: #155724; /* Dark green text */
+            background-color: #d4edda;
+            /* Light green background */
+            color: #155724;
+            /* Dark green text */
         }
     </style>
 </head>
@@ -18,7 +21,6 @@
 <body>
     <div class="container">
         <h1 class="my-4 text-center">Gas Prices in Göteborg</h1>
-
         <div class="row">
             <div class="col-12">
                 <h2 class="my-4">Lowest Prices by Brand</h2>
@@ -28,16 +30,54 @@
                             <tr>
                                 <th>Brand</th>
                                 <th>Lowest Price (kr)</th>
-                                <th>Stations</th>
+                                <th>Station</th>
                                 <th>Last Updated</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in lowest_prices.itertuples() %}
-                            <tr class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}">
+                            <tr
+                                class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}">
                                 <td>{{ row.brand }}</td>
                                 <td>{{ row.price }}</td>
-                                <td>{{ row.station }}</td>
+                                <td>
+                                    <a href="#" data-toggle="modal" data-target="#stationsModal{{ row.Index }}">{{
+                                        row.station }}</a>
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="stationsModal{{ row.Index }}" tabindex="-1"
+                                        role="dialog" aria-labelledby="stationsModalLabel{{ row.Index }}"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="stationsModalLabel{{ row.Index }}">
+                                                        Stations for {{ row.brand }}</h5>
+                                                    <button type="button" class="close" data-dismiss="modal"
+                                                        aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <ul>
+                                                        {% for station in row.stations.split(', ') %}
+                                                        <li class="d-flex align-items-center mb-2">
+                                                            <span class="mr-2">{{ station }}</span>
+                                                            <a href="https://www.google.com/maps/search/?api=1&query={{ station }}"
+                                                                target="_blank" class="btn btn-primary btn-lg">
+                                                                <i class="fas fa-map-marker-alt"></i>
+                                                            </a>
+                                                        </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td>{{ row.created_at }}</td>
                             </tr>
                             {% endfor %}
@@ -46,44 +86,12 @@
                 </div>
             </div>
         </div>
-
-        <div class="row">
-            <div class="col-12">
-                <h2 class="my-4">Lowest Prices</h2>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Brand</th>
-                                <th>Lowest Price (kr)</th>
-                                <th>Station</th>
-                                <th>Last Updated</th>
-                                <th>Period</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in lowest_prices_combined.itertuples() %}
-                            <tr>
-                                <td>{{ row.brand }}</td>
-                                <td>{{ row.price }}</td>
-                                <td>{{ row.station }}</td>
-                                <td>{{ row.created_at }}</td>
-                                <td>{{ row.period }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <div class="row">
             <div class="col-12">
                 <h2 class="my-4">Bensin Prices</h2>
                 <div>{{ bensin_graph_html|safe }}</div>
             </div>
         </div>
-
         <div class="row">
             <div class="col-12">
                 <h2 class="my-4">Brent Prices</h2>
@@ -91,7 +99,6 @@
             </div>
         </div>
     </div>
-
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

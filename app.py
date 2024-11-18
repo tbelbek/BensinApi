@@ -92,11 +92,13 @@ def get_lowest_prices(gas_data):
 
     # Find the lowest prices
     lowest_prices = filtered_data.loc[filtered_data.groupby('brand')['price'].idxmin()].reset_index(drop=True)
-    lowest_prices = filtered_data.groupby(['brand', 'price']).agg({'station': ', '.join}).reset_index()
+    filtered_data['stations'] = filtered_data.groupby(['brand', 'price'])['station'].transform(lambda x: ', '.join(x))
+    lowest_prices = filtered_data.groupby(['brand', 'price']).agg({'station': 'first'}).reset_index()
     latest_update_dates = filtered_data.groupby('brand')['created_at'].max().reset_index()
     latest_update_dates['created_at'] = latest_update_dates['created_at'].dt.strftime('%Y-%m-%d %H:%M:%S')
     lowest_prices = pd.merge(lowest_prices, latest_update_dates, on='brand')
-    return lowest_prices.sort_values(by=['created_at', 'price'])
+    lowest_prices = pd.merge(lowest_prices, filtered_data[['brand', 'price', 'stations']].drop_duplicates(), on=['brand', 'price'])
+    return lowest_prices.sort_values(by=['price'])
 
 def get_lowest_prices_combined(gas_data):
     periods = {
