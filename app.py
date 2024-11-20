@@ -74,9 +74,12 @@ def create_bensin_figure(daily_data):
     )
     bensin_fig.update_layout(
         title="Bensin Prices in Göteborg",
-        xaxis_title="Date",
+        xaxis_title="Hour",
         yaxis_title="Price (kr)",
-        xaxis=dict(type="category"),
+        xaxis=dict(
+            type="date",
+            tickformat="%H:%M"  # Show only the hour and minute
+        ),
     )
     return bensin_fig
 
@@ -103,30 +106,27 @@ def create_brent_figure(brent_daily_data):
 
 
 def get_lowest_prices(gas_data):
-    # Get today's date
-    today = datetime.now().date()
+    # Truncate the created_at timestamps to the hour level
+    gas_data["created_at_hour"] = gas_data["created_at"].dt.floor("H")
+
+    # Get the most recent created_at_hour timestamp
+    latest_timestamp = gas_data["created_at_hour"].max()
 
     # Filter the data for only today's prices
-    todays_data = gas_data[gas_data["created_at"].dt.date == today]
+    todays_data = gas_data[gas_data["created_at_hour"] == latest_timestamp]
 
-    # Combine stations for the same brand, price, and created_at
-    todays_data["stations"] = todays_data.groupby(["brand", "price", "created_at"])[
-        "station"
-    ].transform(lambda x: ", ".join(x))
+    # Combine stations for the same brand, price, and created_at_hour
+    todays_data["stations"] = todays_data.groupby(["brand", "price", "created_at_hour"])["station"].transform(lambda x: ", ".join(x))
 
     # Find the lowest prices for each brand
     lowest_prices_idx = todays_data.groupby("brand")["price"].idxmin()
     lowest_prices = todays_data.loc[lowest_prices_idx].reset_index(drop=True)
 
-    # Format the created_at column
-    lowest_prices["created_at"] = lowest_prices["created_at"].dt.strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
+    # Format the created_at_hour column
+    lowest_prices["created_at"] = lowest_prices["created_at_hour"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     # Select relevant columns and remove duplicates
-    lowest_prices = lowest_prices[
-        ["brand", "price", "station", "stations", "created_at"]
-    ].drop_duplicates()
+    lowest_prices = lowest_prices[["brand", "price", "station", "stations", "created_at"]].drop_duplicates()
 
     return lowest_prices.sort_values(by=["price"])
 
