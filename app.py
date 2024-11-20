@@ -107,7 +107,7 @@ def create_brent_figure(brent_daily_data):
 
 def get_lowest_prices(gas_data):
     # Truncate the created_at timestamps to the hour level
-    gas_data["created_at_hour"] = gas_data["created_at"].dt.floor("H")
+    gas_data["created_at_hour"] = gas_data["created_at"].dt.floor("T")
 
     # Get the most recent created_at_hour timestamp
     latest_timestamp = gas_data["created_at_hour"].max()
