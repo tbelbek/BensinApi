@@ -23,8 +23,10 @@ for hour in range(24):
     scheduler.add_job(
         func=ep.insert_gas_prices, trigger=CronTrigger(hour=hour, minute=0)
     )
-    scheduler.add_job(func=ep.insert_brent_prices, trigger=CronTrigger(hour=hour, minute=0))
 
+scheduler.add_job(func=ep.insert_brent_prices, trigger=CronTrigger(hour=3, minute=0))
+scheduler.add_job(func=ep.insert_brent_prices, trigger=CronTrigger(hour=9, minute=0))
+scheduler.add_job(func=ep.insert_brent_prices, trigger=CronTrigger(hour=15, minute=0))
 scheduler.start()
 
 # Shut down the scheduler when exiting the app
