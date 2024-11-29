@@ -11,6 +11,7 @@ services:
     command: flask run --host=0.0.0.0
     networks:
       - proxy
+    restart: always
   backup:
     image: offen/docker-volume-backup:latest
     restart: always
