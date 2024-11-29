@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     image: tbelbek/bensinpriser:latest
@@ -12,6 +10,12 @@ services:
     networks:
       - proxy
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   backup:
     image: offen/docker-volume-backup:latest
     restart: always
@@ -21,6 +25,12 @@ services:
       - ./prices.db:/backup/bensinpriser-data-backup:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /C/Users/tugha/OneDrive/Backup/Bensinpriser:/archive
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   proxy:
     external: true
