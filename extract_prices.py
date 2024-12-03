@@ -17,7 +17,7 @@ OILPRICE_API_KEY = os.getenv('OILPRICE_API_KEY')
 BASE_URL = 'https://bensinpriser.nu/stationer/95/vastra-gotalands-lan/goteborg'
 
 # Number of pages to scrape
-NUM_PAGES = 3
+NUM_PAGES = 1
 
 # Generate the list of URLs dynamically
 URLS = [f"{BASE_URL}/{i}" if i > 1 else BASE_URL for i in range(1, NUM_PAGES + 1)]
@@ -175,6 +175,10 @@ def insert_gas_prices():
                     price = price.replace('kr', '').replace(',', '.').strip()
                     
                     date = date_tag.get_text(strip=True)
+                    parts = date.split('/')
+                    if len(parts[0]) == 1:
+                        parts[0] = parts[0].zfill(2)
+                    date = '/'.join(parts)
                     
                     # Exclude the row if the date is not today
                     if date not in (today_str, yesterday_str):
