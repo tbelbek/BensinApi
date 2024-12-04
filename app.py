@@ -65,14 +65,20 @@ def process_brent_data(brent_rows):
 def create_bensin_figure(daily_data):
     bensin_fig = go.Figure(
         data=[
-            go.Candlestick(
+            go.Scatter(
                 x=daily_data["date"],
-                open=daily_data["low"],
-                high=daily_data["high"],
-                low=daily_data["low"],
-                close=daily_data["high"],
-                name="Bensin Prices",
-            )
+                y=daily_data["low"],
+                mode="markers",
+                name="Low Prices",
+                marker=dict(color='blue', size=6)
+            ),
+            go.Scatter(
+                x=daily_data["date"],
+                y=daily_data["high"],
+                mode="markers",
+                name="High Prices",
+                marker=dict(color='red', size=6)
+            ),
         ]
     )
     bensin_fig.update_layout(
@@ -169,6 +175,8 @@ def index():
         gas_data.groupby("created_at").agg({"price": ["min", "max"]}).reset_index()
     )
     daily_data.columns = ["date", "low", "high"]
+    
+    print(daily_data)
 
     brent_daily_data = (
         brent_data.groupby("created_at").agg({"price": "mean"}).reset_index()
