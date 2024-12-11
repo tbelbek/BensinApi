@@ -144,20 +144,20 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.current_price && data.previous_price && data.current_price < data.previous_price) {
-                        showNotification(data.current_price, data.is_month_low, data.is_year_low);
+                        showNotification(data.current_price, data.previous_price, data.is_month_low, data.is_year_low);
                     }
                 });
         }
 
         // Function to show notification
-        function showNotification(price, isMonthLow, isYearLow) {
+        function showNotification(price, previous_price, isMonthLow, isYearLow) {
             if (Notification.permission === "granted") {
-                let message = `The current price is ${price}`;
+                let message = `The current price is ${price}. Previous one was ${previous_price}.`;
                 if (isMonthLow) {
-                    message += " (Lowest in the last month)";
+                    message += " (Lowest in the LAST MONTH. Go fill up your tank!)";
                 }
                 if (isYearLow) {
-                    message += " (Lowest in the last year)";
+                    message += " (Lowest in the LAST YEAR. Go fill up your tank!)";
                 }
                 new Notification("Price Drop Alert", {
                     body: message
