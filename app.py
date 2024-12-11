@@ -1,7 +1,7 @@
 import atexit
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import extract_prices as ep
 import pandas as pd
@@ -9,7 +9,7 @@ import plotly.graph_objs as go
 import plotly.offline as pyo
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -201,6 +201,46 @@ def index():
         lowest_prices=lowest_prices,
         lowest_prices_combined=lowest_prices_combined,
     )
+
+@app.route("/current-price")
+def get_current_price():
+    # SQL query to get the latest created_at
+    latest_price_query = """
+        SELECT created_at, MIN(price) AS lowest_price
+        FROM gas_prices
+        WHERE created_at IN (
+            SELECT DISTINCT created_at
+            FROM gas_prices
+            ORDER BY created_at DESC
+            LIMIT 2
+        )
+        GROUP BY created_at
+        ORDER BY created_at DESC
+    """
+    price_rows = fetch_data_from_db(latest_price_query)
+
+    # Fetch the last month's lowest price
+    last_month_query = f"""
+		select min(price) from gas_prices where created_at > datetime('now', '-1 month')
+    """
+    last_year_query = f"""
+		select min(price) from gas_prices where created_at > datetime('now', '-1 month')
+    """
+    last_month_result = fetch_data_from_db(last_month_query)[0][0]
+    last_year_result = fetch_data_from_db(last_year_query)[0][0]
+
+    
+    if price_rows:
+        current_price = price_rows[0][1]  # Newer timestamp
+        previous_price = price_rows[1][1] if len(price_rows) > 1 else None
+        return jsonify({
+            "current_price": current_price,
+            "previous_price": previous_price,
+            "1_month_low": last_month_result >= current_price,
+            "1_year_low": last_year_result >= current_price
+        })
+    else:
+        return jsonify({"price": None}), 404
 
 
 if __name__ == "__main__":

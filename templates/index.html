@@ -132,6 +132,42 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Request notification permission
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        // Function to fetch the latest prices
+        function fetchPrices() {
+            fetch('/current-price')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.current_price && data.previous_price && data.current_price < data.previous_price) {
+                        showNotification(data.current_price, data.is_month_low, data.is_year_low);
+                    }
+                });
+        }
+
+        // Function to show notification
+        function showNotification(price, isMonthLow, isYearLow) {
+            if (Notification.permission === "granted") {
+                let message = `The current price is ${price}`;
+                if (isMonthLow) {
+                    message += " (Lowest in the last month)";
+                }
+                if (isYearLow) {
+                    message += " (Lowest in the last year)";
+                }
+                new Notification("Price Drop Alert", {
+                    body: message
+                });
+            }
+        }
+
+        // Fetch prices every 5 minutes
+        setInterval(fetchPrices, 300000); // 300000 ms = 5 minutes
+    </script>
 </body>
 
 </html>
