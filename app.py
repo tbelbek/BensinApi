@@ -9,7 +9,7 @@ import plotly.graph_objs as go
 import plotly.offline as pyo
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify,send_from_directory
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -242,6 +242,13 @@ def get_current_price():
     else:
         return jsonify({"price": None}), 404
 
+
+
+@app.route('/static/service-worker.js')
+def service_worker():
+    response = send_from_directory('static', 'service-worker.js')
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
 
 if __name__ == "__main__":
     logger.info("Starting Flask application")

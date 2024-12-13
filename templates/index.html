@@ -1,173 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>Gas Prices in Göteborg</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
     <style>
-        .highlight {
-            background-color: #d4edda;
-            /* Light green background */
-            color: #155724;
-            /* Dark green text */
-        }
+      .highlight {
+        background-color: #d4edda;
+        /* Light green background */
+        color: #155724;
+        /* Dark green text */
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div class="container">
-        <h1 class="my-4 text-center">Gas Prices in Göteborg</h1>
-        <div class="row">
-            <div class="col-12">
-                <h2 class="my-4">Lowest Prices by Brand</h2>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Brand</th>
-                                <th>Lowest Price (kr)</th>
-                                <th>Station</th>
-                                <th>Last Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in lowest_prices.itertuples() %}
-                            <tr
-                                class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}">
-                                <td>{{ row.brand }}</td>
-                                <td>{{ row.price }}</td>
-                                <td>
-                                    <a href="#" data-toggle="modal" data-target="#stationsModal{{ row.Index }}">{{
-                                        row.station }}</a>
-                                    <!-- Modal -->
-                                    <div class="modal fade" id="stationsModal{{ row.Index }}" tabindex="-1"
-                                        role="dialog" aria-labelledby="stationsModalLabel{{ row.Index }}"
-                                        aria-hidden="true">
-                                        <div class="modal-dialog" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="stationsModalLabel{{ row.Index }}">
-                                                        Stations for {{ row.brand }}</h5>
-                                                    <button type="button" class="close" data-dismiss="modal"
-                                                        aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <ul>
-                                                        {% for station in row.stations.split(', ') | unique %}
-                                                        <li class="d-flex align-items-center mb-2">
-                                                            <span class="mr-2">{{ station }}</span>
-                                                            <a href="https://www.google.com/maps/search/?api=1&query={{ station }}"
-                                                                target="_blank" class="btn btn-primary btn-lg">
-                                                                <i class="fas fa-map-marker-alt"></i>
-                                                            </a>
-                                                        </li>
-                                                        {% endfor %}
-                                                    </ul>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-dismiss="modal">Close</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ row.created_at }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+      <h1 class="my-4 text-center">Gas Prices in Göteborg</h1>
+      <div class="row">
+        <div class="col-12">
+          <h2 class="my-4">Lowest Prices by Brand</h2>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead class="thead-dark">
+                <tr>
+                  <th>Brand</th>
+                  <th>Lowest Price (kr)</th>
+                  <th>Station</th>
+                  <th>Last Updated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in lowest_prices.itertuples() %}
+                <tr
+                  class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}"
+                >
+                  <td>{{ row.brand }}</td>
+                  <td>{{ row.price }}</td>
+                  <td>
+                    <a
+                      href="#"
+                      data-toggle="modal"
+                      data-target="#stationsModal{{ row.Index }}"
+                      >{{ row.station }}</a
+                    >
+                    <!-- Modal -->
+                    <div
+                      class="modal fade"
+                      id="stationsModal{{ row.Index }}"
+                      tabindex="-1"
+                      role="dialog"
+                      aria-labelledby="stationsModalLabel{{ row.Index }}"
+                      aria-hidden="true"
+                    >
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5
+                              class="modal-title"
+                              id="stationsModalLabel{{ row.Index }}"
+                            >
+                              Stations for {{ row.brand }}
+                            </h5>
+                            <button
+                              type="button"
+                              class="close"
+                              data-dismiss="modal"
+                              aria-label="Close"
+                            >
+                              <span aria-hidden="true"
+                                >&times;</span
+                              >
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <ul>
+                              {% for station in
+                              row.stations.split(', ') | unique
+                              %}
+                              <li
+                                class="d-flex align-items-center mb-2"
+                              >
+                                <span class="mr-2"
+                                  >{{ station }}</span
+                                >
+                                <a
+                                  href="https://www.google.com/maps/search/?api=1&query={{ station }}"
+                                  target="_blank"
+                                  class="btn btn-primary btn-lg"
+                                >
+                                  <i
+                                    class="fas fa-map-marker-alt"
+                                  ></i>
+                                </a>
+                              </li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                          <div class="modal-footer">
+                            <button
+                              type="button"
+                              class="btn btn-secondary"
+                              data-dismiss="modal"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ row.created_at }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
 
-        <div class="row">
-            <div class="col-12">
-                <h2 class="my-4">Lowest Prices</h2>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Brand</th>
-                                <th>Lowest Price (kr)</th>
-                                <th>Station</th>
-                                <th>Last Updated</th>
-                                <th>Period</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in lowest_prices_combined.itertuples() %}
-                            <tr>
-                                <td>{{ row.brand }}</td>
-                                <td>{{ row.price }}</td>
-                                <td>{{ row.station }}</td>
-                                <td>{{ row.created_at }}</td>
-                                <td>{{ row.period }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+      <div class="row">
+        <div class="col-12">
+          <h2 class="my-4">Lowest Prices</h2>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead class="thead-dark">
+                <tr>
+                  <th>Brand</th>
+                  <th>Lowest Price (kr)</th>
+                  <th>Station</th>
+                  <th>Last Updated</th>
+                  <th>Period</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in lowest_prices_combined.itertuples()
+                %}
+                <tr>
+                  <td>{{ row.brand }}</td>
+                  <td>{{ row.price }}</td>
+                  <td>{{ row.station }}</td>
+                  <td>{{ row.created_at }}</td>
+                  <td>{{ row.period }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="row">
-            <div class="col-12">
-                <h2 class="my-4">Bensin Prices</h2>
-                <div>{{ bensin_graph_html|safe }}</div>
-            </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <h2 class="my-4">Bensin Prices</h2>
+          <div>{{ bensin_graph_html|safe }}</div>
         </div>
-        <div class="row">
-            <div class="col-12">
-                <h2 class="my-4">Brent Prices</h2>
-                <div>{{ brent_graph_html|safe }}</div>
-            </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <h2 class="my-4">Brent Prices</h2>
+          <div>{{ brent_graph_html|safe }}</div>
         </div>
+      </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        // Request notification permission
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
+      // Register the service worker
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/static/service-worker.js", { scope: "/" })
+          .then(function (registration) {
+            console.log(
+              "Service Worker registered with scope:",
+              registration.scope
+            );
+          })
+          .catch(function (error) {
+            console.log(
+              "Service Worker registration failed:",
+              error
+            );
+          });
+      }
 
-        // Function to fetch the latest prices
-        function fetchPrices() {
-            fetch('/current-price')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.current_price && data.previous_price && data.current_price < data.previous_price) {
-                        showNotification(data.current_price, data.previous_price, data.is_month_low, data.is_year_low);
-                    }
-                });
-        }
+      // Request notification permission
+      if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
 
-        // Function to show notification
-        function showNotification(price, previous_price, isMonthLow, isYearLow) {
-            if (Notification.permission === "granted") {
-                let message = `The current price is ${price}. Previous one was ${previous_price}.`;
-                if (isMonthLow) {
-                    message += " (Lowest in the LAST MONTH. Go fill up your tank!)";
-                }
-                if (isYearLow) {
-                    message += " (Lowest in the LAST YEAR. Go fill up your tank!)";
-                }
-                new Notification("Price Drop Alert", {
-                    body: message
-                });
+      // Function to fetch the latest prices
+      function fetchPrices() {
+        fetch("/current-price")
+          .then((response) => response.json())
+          .then((data) => {
+            showNotification(
+                data.current_price,
+                data.previous_price,
+                data["1_month_low"],
+                data["1_year_low"]
+              );
+            if (
+              data.current_price &&
+              data.previous_price &&
+              data.current_price < data.previous_price
+            ) {
+              showNotification(
+                data.current_price,
+                data.previous_price,
+                data["1_month_low"],
+                data["1_year_low"]
+              );
             }
+          });
+      }
+
+      // Function to show notification
+      function showNotification(
+        price,
+        previous_price,
+        isMonthLow,
+        isYearLow
+      ) {
+        if (Notification.permission === "granted") {
+          let message = `The current price is ${price}. Previous one was ${previous_price}.`;
+          if (isMonthLow) {
+            message +=
+              " (Lowest in the LAST MONTH. Go fill up your tank!)";
+          }
+          if (isYearLow) {
+            message +=
+              " (Lowest in the LAST YEAR. Go fill up your tank!)";
+          }
+          navigator.serviceWorker.ready.then(function (
+            registration
+          ) {
+            registration.showNotification("Price Drop Alert", {
+              body: message,
+              icon: "/static/exclamation-icon.png", // Path to your exclamation mark icon
+            });
+          });
         }
+      }
 
-        // Fetch prices every 5 minutes
-        setInterval(fetchPrices, 300000); // 300000 ms = 5 minutes
+      // Calculate the initial delay to the next 10 minutes past the hour
+      function calculateInitialDelay() {
+        const now = new Date();
+        const nextFetch = new Date();
+        nextFetch.setMinutes(10);
+        nextFetch.setSeconds(0);
+        nextFetch.setMilliseconds(0);
+        if (now.getMinutes() >= 10) {
+          nextFetch.setHours(now.getHours() + 1);
+        }
+        return nextFetch - now;
+      }
+
+      // Set the initial timeout and then the interval
+      setTimeout(() => {
+        fetchPrices();
+        setInterval(fetchPrices, 3000); // 3600000 ms = 1 hour
+      }, calculateInitialDelay());
     </script>
-</body>
-
+  </body>
 </html>
