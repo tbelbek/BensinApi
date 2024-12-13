@@ -23,6 +23,9 @@ for hour in range(24):
     scheduler.add_job(
         func=ep.insert_gas_prices, trigger=CronTrigger(hour=hour, minute=0)
     )
+    scheduler.add_job(
+        func=ep.insert_gas_prices, trigger=CronTrigger(hour=hour, minute=30)
+    )
 
 scheduler.add_job(func=ep.insert_brent_prices, trigger=CronTrigger(hour=3, minute=0))
 scheduler.add_job(func=ep.insert_brent_prices, trigger=CronTrigger(hour=9, minute=0))
@@ -32,6 +35,7 @@ scheduler.start()
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
+ep.insert_gas_prices()
 
 def fetch_data_from_db(query):
     conn = sqlite3.connect(ep.DB_PATH)

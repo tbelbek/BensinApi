@@ -147,6 +147,7 @@ def insert_gas_prices():
     }
 
     for url in URLS:
+        print(f"Fetching data from URL: {url}")
         # Send a GET request to the URL
         response = requests.get(url, headers=headers)
 
@@ -181,14 +182,14 @@ def insert_gas_prices():
                     date = '/'.join(parts)
                     
                     # Exclude the row if the date is not today
-                    if date not in (today_str, yesterday_str):
+                    if date not in (today_str):
                         continue
                     
                     # Extract the date and add the current year
                     date_with_year = f"{date}/{datetime.now().year}"                
                         
                     # Append the data to the list
-                    all_data.append((brand, station, price, date_with_year))
+                    all_data.append((brand, station, str(float(price)+0.2) , date_with_year))
 
     # Create a dictionary to store the latest data for each station
     latest_data = {}

@@ -206,12 +206,6 @@
         fetch("/current-price")
           .then((response) => response.json())
           .then((data) => {
-            showNotification(
-                data.current_price,
-                data.previous_price,
-                data["1_month_low"],
-                data["1_year_low"]
-              );
             if (
               data.current_price &&
               data.previous_price &&
@@ -247,9 +241,9 @@
           navigator.serviceWorker.ready.then(function (
             registration
           ) {
-            registration.showNotification("Price Drop Alert", {
+            registration.showNotification("Cheap Fuel Alert", {
               body: message,
-              icon: "/static/exclamation-icon.png", // Path to your exclamation mark icon
+              icon: "/static/exclamation-mark.png", // Path to your exclamation mark icon
             });
           });
         }
@@ -271,7 +265,7 @@
       // Set the initial timeout and then the interval
       setTimeout(() => {
         fetchPrices();
-        setInterval(fetchPrices, 3600000); // 3600000 ms = 1 hour
+        setInterval(fetchPrices, 1800000); // 3600000 ms = 1 hour
       }, calculateInitialDelay());
     </script>
   </body>
