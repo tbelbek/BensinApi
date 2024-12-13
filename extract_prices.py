@@ -123,9 +123,10 @@ def insert_gas_prices():
 
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "max-age=0",
-        "cookie": "PHPSESSID=i3orohsenila77n33913amke84",
+        "accept-language": "en-US,en;q=0.7",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "cookie": "PHPSESSID=ddbblauacj8njk46qqk15caaol;",
         "dnt": "1",
         "priority": "u=0, i",
         "referer": "https://bensinpriser.nu/stationer/98/vastra-gotalands-lan/goteborg",
@@ -139,7 +140,7 @@ def insert_gas_prices():
         "sec-ch-ua-platform-version": "\"10.0.0\"",
         "sec-fetch-dest": "document",
         "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "same-origin",
+        "sec-fetch-site": "cross-site",
         "sec-fetch-user": "?1",
         "sec-gpc": "1",
         "upgrade-insecure-requests": "1",
@@ -189,7 +190,7 @@ def insert_gas_prices():
                     date_with_year = f"{date}/{datetime.now().year}"                
                         
                     # Append the data to the list
-                    all_data.append((brand, station, str(float(price)+0.2) , date_with_year))
+                    all_data.append((brand, station, price , date_with_year))
 
     # Create a dictionary to store the latest data for each station
     latest_data = {}
@@ -232,7 +233,7 @@ def main():
     print("Fetching and inserting gas prices...")
     create_database()
     insert_gas_prices()
-    insert_brent_prices()
+    # insert_brent_prices()
 
 if __name__ == "__main__":
     main()
