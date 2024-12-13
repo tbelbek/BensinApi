@@ -233,7 +233,7 @@ def main():
     print("Fetching and inserting gas prices...")
     create_database()
     insert_gas_prices()
-    # insert_brent_prices()
+    insert_brent_prices()
 
 if __name__ == "__main__":
     main()
