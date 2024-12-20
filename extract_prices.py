@@ -6,6 +6,12 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,6 +33,40 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the full path to the database file
 DB_PATH = os.path.join(SCRIPT_DIR, 'prices.db')
+
+# Function to renew session ID using Selenium
+def renew_session_id(login_url):
+    # Set up the Selenium WebDriver (Chrome in this case)
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')  # Run in headless mode
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
+    options.binary_location = "/usr/bin/google-chrome"  # Path to the Chrome binary
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+
+    try:
+        # Navigate to the login page
+        driver.get(login_url)
+
+        # Wait for the login to complete and the session ID to be set
+        time.sleep(5)  # Adjust the sleep time as needed
+
+        # Extract the session ID from the cookies
+        cookies = driver.get_cookies()
+        session_id = None
+        for cookie in cookies:
+            if cookie['name'] == 'PHPSESSID':  # Replace with the actual cookie name
+                session_id = cookie['value']
+                break
+
+        if session_id:
+            print("New session ID:", session_id)
+            return session_id
+        else:
+            print("Failed to retrieve session ID.")
+            return None
+    finally:
+        driver.quit()
 
 def fetch_brent_prices():
     try:
@@ -120,13 +160,15 @@ def insert_gas_prices():
     yesterday_str = yesterday.strftime('%d/%m')
 
     all_data = []
+    
+    php_session_id= renew_session_id(BASE_URL)
 
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "accept-language": "en-US,en;q=0.7",
         "cache-control": "no-cache",
         "pragma": "no-cache",
-        "cookie": "PHPSESSID=ddbblauacj8njk46qqk15caaol;",
+        "cookie": f"PHPSESSID={php_session_id}",
         "dnt": "1",
         "priority": "u=0, i",
         "referer": "https://bensinpriser.nu/stationer/98/vastra-gotalands-lan/goteborg",
@@ -233,7 +275,7 @@ def main():
     print("Fetching and inserting gas prices...")
     create_database()
     insert_gas_prices()
-    insert_brent_prices()
+    # insert_brent_prices()
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
 # Build the Docker image
-docker build -t bensinpriser .
+docker build -t bensinpriser . --no-cache
 
 # Tag the Docker image
 docker tag bensinpriser tbelbek/bensinpriser:latest
