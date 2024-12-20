@@ -12,6 +12,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 import time
+from requests_html import HTMLSession
 
 # Load environment variables from .env file
 load_dotenv()
@@ -34,39 +35,26 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Construct the full path to the database file
 DB_PATH = os.path.join(SCRIPT_DIR, 'prices.db')
 
-# Function to renew session ID using Selenium
-def renew_session_id(login_url):
-    # Set up the Selenium WebDriver (Chrome in this case)
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')  # Run in headless mode
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.binary_location = "/usr/bin/google-chrome"  # Path to the Chrome binary
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+# Function to renew session ID using requests_html
+def renew_session_id(base_url):
+    session = HTMLSession()
 
-    try:
-        # Navigate to the login page
-        driver.get(login_url)
+    # Perform the request
+    response = session.get(base_url)
 
-        # Wait for the login to complete and the session ID to be set
-        time.sleep(5)  # Adjust the sleep time as needed
-
+    # Check if login was successful
+    if response.status_code == 200:
         # Extract the session ID from the cookies
-        cookies = driver.get_cookies()
-        session_id = None
-        for cookie in cookies:
-            if cookie['name'] == 'PHPSESSID':  # Replace with the actual cookie name
-                session_id = cookie['value']
-                break
-
+        session_id = session.cookies.get("PHPSESSID")  # Replace with the actual cookie name
         if session_id:
             print("New session ID:", session_id)
             return session_id
         else:
             print("Failed to retrieve session ID.")
             return None
-    finally:
-        driver.quit()
+    else:
+        print("Login failed with status code:", response.status_code)
+        return None
 
 def fetch_brent_prices():
     try:
