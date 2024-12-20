@@ -6,3 +6,4 @@ requests
 python-dotenv
 APScheduler
 requests-html
+lxml_html_clean
