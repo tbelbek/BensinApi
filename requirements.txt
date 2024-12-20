@@ -5,5 +5,4 @@ beautifulsoup4
 requests
 python-dotenv
 APScheduler
-selenium
-webdriver_manager
+requests-html
