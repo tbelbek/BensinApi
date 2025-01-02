@@ -138,8 +138,11 @@ def get_lowest_prices(gas_data):
     # Format the created_at_hour column
     lowest_prices["created_at"] = lowest_prices["created_at_hour"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
+    # Add 0.4 to the prices and format them as a range
+    lowest_prices["price_range"] = lowest_prices["price"].apply(lambda x: f"{x:.2f} ~ {x + 0.4:.2f}")
+
     # Select relevant columns and remove duplicates
-    lowest_prices = lowest_prices[["brand", "price", "station", "stations", "created_at"]].drop_duplicates()
+    lowest_prices = lowest_prices[["brand", "price", "price_range", "station", "stations", "created_at"]].drop_duplicates()
 
     return lowest_prices.sort_values(by=["price"])
 
@@ -159,6 +162,7 @@ def get_lowest_prices_combined(gas_data):
             data = gas_data
         lowest_price = data.nsmallest(1, "price")
         lowest_price["period"] = period
+        lowest_price["price_range"] = lowest_price["price"].apply(lambda x: f"{x:.2f} ~ {x + 0.4:.2f}")
         lowest_prices_combined.append(lowest_price)
     return pd.concat(lowest_prices_combined)
 
@@ -207,6 +211,7 @@ def index():
     )
 
 @app.route("/current-price")
+@app.route("/current-price")
 def get_current_price():
     # SQL query to get the latest created_at
     latest_price_query = """
@@ -224,22 +229,25 @@ def get_current_price():
     price_rows = fetch_data_from_db(latest_price_query)
 
     # Fetch the last month's lowest price
-    last_month_query = f"""
-		select min(price) from gas_prices where created_at > datetime('now', '-1 month')
+    last_month_query = """
+        SELECT MIN(price) FROM gas_prices WHERE created_at > datetime('now', '-1 month')
     """
-    last_year_query = f"""
-		select min(price) from gas_prices where created_at > datetime('now', '-1 month')
+    last_year_query = """
+        SELECT MIN(price) FROM gas_prices WHERE created_at > datetime('now', '-1 year')
     """
-    last_month_result = fetch_data_from_db(last_month_query)[0][0]
-    last_year_result = fetch_data_from_db(last_year_query)[0][0]
+    last_month_result = float(fetch_data_from_db(last_month_query)[0][0])
+    last_year_result = float(fetch_data_from_db(last_year_query)[0][0])
 
-    
     if price_rows:
-        current_price = price_rows[0][1]  # Newer timestamp
-        previous_price = price_rows[1][1] if len(price_rows) > 1 else None
+        current_price = float(price_rows[0][1])  # Newer timestamp
+        previous_price = float(price_rows[1][1]) if len(price_rows) > 1 else None
+        current_price_range = f"{current_price:.2f} ~ {current_price + 0.4:.2f}"
+        previous_price_range = f"{previous_price:.2f} ~ {previous_price + 0.4:.2f}" if previous_price else None
         return jsonify({
             "current_price": current_price,
+            "current_price_range": current_price_range,
             "previous_price": previous_price,
+            "previous_price_range": previous_price_range,
             "1_month_low": last_month_result >= current_price,
             "1_year_low": last_year_result >= current_price
         })

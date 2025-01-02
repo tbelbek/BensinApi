@@ -48,7 +48,7 @@
                   class="{% if row.price <= lowest_prices_combined[lowest_prices_combined['brand'] == row.brand]['price'].min() %}highlight{% endif %}"
                 >
                   <td>{{ row.brand }}</td>
-                  <td>{{ row.price }}</td>
+                  <td>{{ row.price_range }}</td>
                   <td>
                     <a
                       href="#"
@@ -150,7 +150,7 @@
                 %}
                 <tr>
                   <td>{{ row.brand }}</td>
-                  <td>{{ row.price }}</td>
+                  <td>{{ row.price_range }}</td>
                   <td>{{ row.station }}</td>
                   <td>{{ row.created_at }}</td>
                   <td>{{ row.period }}</td>
@@ -212,8 +212,8 @@
               data.current_price < data.previous_price
             ) {
               showNotification(
-                data.current_price,
-                data.previous_price,
+                data.current_price_range,
+                data.previous_price_range,
                 data["1_month_low"],
                 data["1_year_low"]
               );

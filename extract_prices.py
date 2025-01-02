@@ -173,8 +173,14 @@ def insert_gas_prices():
 
     for url in URLS:
         print(f"Fetching data from URL: {url}")
+        
+        # Define the proxy settings
+        proxies = {
+            "http": "http://host.docker.internal:40000",
+            "https": "http://host.docker.internal:40000"
+        }
         # Send a GET request to the URL
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, proxies=proxies)
 
         # Parse the HTML content using BeautifulSoup
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -257,7 +263,7 @@ def main():
     print("Fetching and inserting gas prices...")
     create_database()
     insert_gas_prices()
-    # insert_brent_prices()
+    insert_brent_prices()
 
 if __name__ == "__main__":
     main()
