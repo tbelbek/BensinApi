@@ -176,8 +176,8 @@ def insert_gas_prices():
         
         # Define the proxy settings
         proxies = {
-            "http": "http://host.docker.internal:40000",
-            "https": "http://host.docker.internal:40000"
+            # "http": "http://host.docker.internal:40000",
+            # "https": "http://host.docker.internal:40000"
         }
         # Send a GET request to the URL
         response = requests.get(url, headers=headers, proxies=proxies)
@@ -208,8 +208,9 @@ def insert_gas_prices():
                     
                     date = date_tag.get_text(strip=True)
                     parts = date.split('/')
-                    if len(parts[0]) == 1:
-                        parts[0] = parts[0].zfill(2)
+                    for i in range(len(parts)):
+                        if len(parts[i]) == 1:
+                            parts[i] = parts[i].zfill(2)
                     date = '/'.join(parts)
                     
                     # Exclude the row if the date is not today
