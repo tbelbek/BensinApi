@@ -24,7 +24,7 @@ services:
       - ./.env:/backup/bensinpriser-env-backup:ro
       - ./prices.db:/backup/bensinpriser-data-backup:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /C/Users/tugha/OneDrive/Backup/Bensinpriser:/archive
+      - /D/OneDrive/Backup/Bensinpriser:/archive
     logging:
       driver: "json-file"
       options:
